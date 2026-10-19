@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>G-Optics Eyewear | Gayatri Opticals Pune</title>
+    <!-- Tailwind CSS & Icons -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .brand-bg { background-color: #0b1e36; }
+        .gold-accent { color: #f4c430; }
+        .gold-bg { background-color: #f4c430; }
+    </style>
+</head>
+<body class="bg-gray-100 flex justify-center min-h-screen text-gray-800">
+
+    <!-- FIREBASE INITIALIZATION -->
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBtVCbJoJfX7D9MBwDGcSv61cnjECnky5Y",
+            authDomain: "g-optics.firebaseapp.com",
+            projectId: "g-optics",
+            storageBucket: "g-optics.firebasestorage.app",
+            messagingSenderId: "559384052104",
+            appId: "1:559384052104:web:25f1de9b9ddd213bbafa3d"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+    </script>
+
+    <!-- MOBILE APP WRAPPER -->
+    <div class="w-full max-w-md bg-white min-h-screen shadow-2xl relative flex flex-col pb-20">
+
+        <!-- 1. LOGIN MODAL (FOR NEW USERS) -->
+        <div id="loginModal" class="hidden fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+            <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl border border-gray-100 text-center animate-fade-in">
+                <div class="w-14 h-14 brand-bg rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl gold-accent font-black shadow-md">
+                    G
+                </div>
+                <h2 class="text-xl font-black text-gray-900 tracking-tight">Welcome to G-Optics</h2>
+                <p class="text-xs text-gray-500 mb-5">Gayatri Opticals • Budhwar Peth, Pune</p>
+
+                <!-- Phone Step -->
+                <div id="phoneStep" class="space-y-3">
+                    <input type="text" id="custNameInput" placeholder="Your Full Name" class="w-full px-4 py-2.5 text-xs border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-950">
+                    <div class="flex gap-2">
+                        <span class="px-3 py-2.5 bg-gray-100 border rounded-xl text-xs font-bold text-gray-600 flex items-center">+91</span>
+                        <input type="tel" id="custPhoneInput" maxlength="10" placeholder="10-digit Mobile Number" class="w-full px-4 py-2.5 text-xs border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-950">
+                    </div>
+                    <button onclick="sendOtp()" class="w-full py-3 brand-bg text-amber-400 font-bold rounded-xl text-xs uppercase tracking-wider shadow-md hover:bg-blue-900 transition">
+                        Get Verification OTP
+                    </button>
+                </div>
+
+                <!-- OTP Step -->
+                <div id="otpStep" class="hidden space-y-3">
+                    <p class="text-xs text-gray-600 font-medium">Enter 4-digit code sent to your phone:</p>
+                    <input type="number" id="otpCodeInput" placeholder="Enter 1234 (Demo OTP)" class="w-full px-4 py-2.5 text-center text-sm font-bold tracking-widest border rounded-xl focus:outline-none">
+                    <button onclick="verifyOtp()" class="w-full py-3 bg-emerald-600 text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-md hover:bg-emerald-700 transition">
+                        Verify & Continue
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TOP BAR (HEADER) -->
+        <header class="brand-bg text-white sticky top-0 z-30 px-4 py-3 shadow-md">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg gold-bg text-blue-950 font-black flex items-center justify-center text-base shadow-sm">
+                        G
+                    </div>
+                    <div>
+                        <h1 class="text-xs font-black tracking-wider text-amber-400 leading-none">GAYATRI OPTICALS</h1>
+                        <p class="text-[9px] text-gray-300">Jogeshwari Lane, Budhwar Peth, Pune</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="openCart()" class="relative p-2 bg-white/10 rounded-full hover:bg-white/20 transition">
+                        <i class="fa-solid fa-cart-shopping text-sm text-white"></i>
+                        <span id="cartBadge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">0</span>
+                    </button>
+                    <div id="userProfileBtn" onclick="checkAuth()" class="w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-xs text-white cursor-pointer">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEARCH BAR -->
+            <div class="mt-2.5 relative">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                    <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                </span>
+                <input type="text" id="searchInput" oninput="applyFilters()" placeholder="Search frames, clip-ons, sunglasses..." class="w-full pl-9 pr-3 py-1.5 text-xs text-gray-800 bg-white rounded-xl focus:outline-none shadow-inner">
+            </div>
+        </header>
+
+        <!-- MAIN SCROLLABLE CONTENT -->
+        <main class="flex-1 overflow-y-auto space-y-4 p-3.5">
+
+            <!-- PROMO BANNER -->
+            <div class="rounded-2xl p-4 bg-gradient-to-r from-blue-950 to-slate-900 text-white relative overflow-hidden shadow-lg border border-blue-900">
+                <div class="relative z-10 max-w-[70%]">
+                    <span class="px-2 py-0.5 bg-amber-400 text-blue-950 font-black text-[9px] uppercase tracking-wider rounded-md">Special Offer</span>
+                    <h3 class="text-sm font-extrabold mt-1 text-white leading-tight">Magnetic 3-in-1 Clip-On Frames</h3>
+                    <p class="text-[10px] text-gray-300 mt-0.5">Spectacles + Polarized Sunglasses at just ₹1,499</p>
+                </div>
+                <div class="absolute -right-2 -bottom-2 opacity-25 text-amber-400 text-7xl font-black">
+                    <i class="fa-solid fa-glasses"></i>
+                </div>
+            </div>
+
+            <!-- CATEGORY PILLS -->
+            <div>
+                <h3 class="text-xs font-bold text-gray-800 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <span>Shop By Category</span>
+                </h3>
+                <div class="flex gap-2 overflow-x-auto hide-scrollbar pb-1 text-xs">
+                    <button onclick="setCategory('All')" class="cat-pill px-3.5 py-1.5 rounded-full font-bold whitespace-nowrap bg-blue-950 text-amber-400 shadow-sm" data-cat="All">All Frames</button>
+                    <button onclick="setCategory('Men')" class="cat-pill px-3.5 py-1.5 rounded-full font-semibold whitespace-nowrap bg-gray-100 text-gray-700 hover:bg-gray-200" data-cat="Men">👨 Men</button>
+                    <button onclick="setCategory('Women')" class="cat-pill px-3.5 py-1.5 rounded-full font-semibold whitespace-nowrap bg-gray-100 text-gray-700 hover:bg-gray-200" data-cat="Women">👩 Women</button>
+                    <button onclick="setCategory('Kids')" class="cat-pill px-3.5 py-1.5 rounded-full font-semibold whitespace-nowrap bg-gray-100 text-gray-700 hover:bg-gray-200" data-cat="Kids">👦 Kids</button>
+                    <button onclick="setCategory('Seniors')" class="cat-pill px-3.5 py-1.5 rounded-full font-semibold whitespace-nowrap bg-gray-100 text-gray-700 hover:bg-gray-200" data-cat="Seniors">👴 Seniors</button>
+                    <button onclick="setCategory('Goggles')" class="cat-pill px-3.5 py-1.5 rounded-full font-semibold whitespace-nowrap bg-gray-100 text-gray-700 hover:bg-gray-200" data-cat="Goggles">🕶️ Sunglasses</button>
+                    <button onclick="setCategory('Clip-ons')" class="cat-pill px-3.5 py-1.5 rounded-full font-semibold whitespace-nowrap bg-gray-100 text-gray-700 hover:bg-gray-200" data-cat="Clip-ons">🧲 Clip-ons</button>
+                </div>
+            </div>
+
+            <!-- FRAME SHAPE FILTERS -->
+            <div class="flex gap-1.5 overflow-x-auto hide-scrollbar text-[11px] pb-1">
+                <button onclick="setShape('All')" class="shape-pill px-2.5 py-1 rounded-lg border bg-blue-950 text-white font-bold" data-shape="All">All Shapes</button>
+                <button onclick="setShape('Rectangle')" class="shape-pill px-2.5 py-1 rounded-lg border bg-white text-gray-600" data-shape="Rectangle">Rectangle</button>
+                <button onclick="setShape('Round')" class="shape-pill px-2.5 py-1 rounded-lg border bg-white text-gray-600" data-shape="Round">Round</button>
+                <button onclick="setShape('Square')" class="shape-pill px-2.5 py-1 rounded-lg border bg-white text-gray-600" data-shape="Square">Square</button>
+                <button onclick="setShape('Aviator')" class="shape-pill px-2.5 py-1 rounded-lg border bg-white text-gray-600" data-shape="Aviator">Aviator</button>
+                <button onclick="setShape('Cat-Eye')" class="shape-pill px-2.5 py-1 rounded-lg border bg-white text-gray-600" data-shape="Cat-Eye">Cat-Eye</button>
+                <button onclick="setShape('Clubmaster')" class="shape-pill px-2.5 py-1 rounded-lg border bg-white text-gray-600" data-shape="Clubmaster">Clubmaster</button>
+            </div>
+
+            <!-- PRODUCT GRID -->
+            <div>
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-xs font-bold text-gray-800 uppercase tracking-wider">Available Eyewear</h3>
+                    <span id="productCount" class="text-[10px] text-gray-500 font-bold">Loading products...</span>
+                </div>
+                <div id="productGrid" class="grid grid-cols-2 gap-3">
+                    <div class="p-6 col-span-2 text-center text-xs text-gray-400">Loading catalog from Gayatri Opticals...</div>
+                </div>
+            </div>
+
+            <!-- STORE DETAILS BANNER -->
+            <div class="p-3.5 bg-gray-50 border border-gray-200 rounded-2xl text-center space-y-1">
+                <p class="text-xs font-bold text-blue-950">📍 Visit Our Flagship Store</p>
+                <p class="text-[11px] text-gray-600">Gayatri Opticals, Jogeshwari Lane, Budhwar Peth, Pune</p>
+                <p class="text-[10px] text-gray-500 font-semibold">Free Eye Testing & Ultrasonic Frame Cleaning Available</p>
+            </div>
+
+            <!-- REVIEWS SECTION -->
+            <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm space-y-3">
+                <div class="flex justify-between items-center border-b pb-2">
+                    <h3 class="text-xs font-bold text-gray-800 uppercase tracking-wider">Customer Reviews</h3>
+                    <button onclick="openReviewModal()" class="text-[11px] font-bold text-blue-900 hover:underline">+ Write Review</button>
+                </div>
+                <div id="reviewsContainer" class="space-y-2 text-xs">
+                    <p class="text-gray-400">Loading verified customer reviews...</p>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- BOTTOM NAVIGATION BAR -->
+        <nav class="fixed bottom-0 w-full max-w-md bg-white border-t border-gray-200 flex justify-around py-2 z-40 shadow-lg">
+            <button onclick="switchView('home')" class="nav-btn flex flex-col items-center text-blue-950">
+                <i class="fa-solid fa-house text-sm"></i>
+                <span class="text-[10px] font-bold mt-0.5">Home</span>
+            </button>
+            <button onclick="openMyOrders()" class="nav-btn flex flex-col items-center text-gray-500 hover:text-blue-950">
+                <i class="fa-solid fa-box text-sm"></i>
+                <span class="text-[10px] font-bold mt-0.5">Orders</span>
+            </button>
+            <button onclick="openCart()" class="nav-btn flex flex-col items-center text-gray-500 hover:text-blue-950">
+                <i class="fa-solid fa-cart-shopping text-sm"></i>
+                <span class="text-[10px] font-bold mt-0.5">Cart</span>
+            </button>
+        </nav>
+
+        <!-- DUAL FLOATING SUPPORT (WHATSAPP + CALL) -->
+        <div class="fixed bottom-16 right-4 z-40 flex flex-col gap-2">
+            <a href="tel:9950053123" class="w-10 h-10 bg-blue-950 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-blue-900 transition">
+                <i class="fa-solid fa-phone text-xs"></i>
+            </a>
+            <a href="https://wa.me/919950053123?text=Hello%20Gayatri%20Opticals,%20I%20have%20an%20inquiry%20about%20your%20app" target="_blank" class="w-11 h-11 bg-green-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-green-600 transition">
+                <i class="fa-brands fa-whatsapp text-lg"></i>
+            </a>
+        </div>
+
+        <!-- 2. PRODUCT CUSTOMIZATION & DETAIL MODAL -->
+        <div id="productDetailModal" class="hidden fixed inset-0 z-50 bg-black/70 flex items-end justify-center">
+            <div class="bg-white rounded-t-3xl p-5 w-full max-w-md max-h-[90vh] overflow-y-auto space-y-4 shadow-2xl animate-slide-up">
+                <div class="flex justify-between items-start border-b pb-2">
+                    <div>
+                        <h3 id="modalFrameName" class="text-sm font-extrabold text-blue-950"></h3>
+                        <p id="modalFrameMeta" class="text-[11px] text-gray-500"></p>
+                    </div>
+                    <button onclick="closeProductModal()" class="p-1 text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+                </div>
+
+                <div class="relative bg-gray-50 rounded-2xl p-2 border flex items-center justify-center overflow-hidden h-44">
+                    <img id="modalFrameImg" class="max-h-full max-w-full object-contain">
+                    <div id="modal360Badge" class="hidden absolute top-2 right-2">
+                        <a id="modal360Link" target="_blank" class="px-2.5 py-1 bg-blue-950 text-amber-400 text-[10px] font-bold rounded-lg shadow flex items-center gap-1">
+                            <i class="fa-solid fa-arrows-spin"></i> 360° View
+                        </a>
+                    </div>
+                </div>
+
+                <!-- LENS SELECTION -->
+                <div class="space-y-2">
+                    <label class="block text-xs font-bold text-gray-800 uppercase">1. Choose Lens Package</label>
+                    <div class="space-y-1.5 text-xs">
+                        <label class="flex items-center justify-between p-2.5 border rounded-xl cursor-pointer hover:bg-gray-50">
+                            <div>
+                                <input type="radio" name="lensChoice" value="frameOnly" onchange="onLensSelected(0, 'Frame Only')" checked class="mr-2">
+                                <span class="font-bold">Frame Only (Without Lenses)</span>
+                            </div>
+                            <span class="font-bold text-gray-600">+₹0</span>
+                        </label>
+                        <label class="flex items-center justify-between p-2.5 border rounded-xl cursor-pointer hover:bg-gray-50">
+                            <div>
+                                <input type="radio" name="lensChoice" value="zeroPower" onchange="onLensSelected(499, 'Zero Power Blue-Cut')" class="mr-2">
+                                <span class="font-bold">Zero Power Blue-Cut (Screen Protection)</span>
+                            </div>
+                            <span class="font-bold text-blue-900">+₹499</span>
+                        </label>
+                        <label class="flex items-center justify-between p-2.5 border rounded-xl cursor-pointer hover:bg-gray-50">
+                            <div>
+                                <input type="radio" name="lensChoice" value="singleVision" onchange="onLensSelected(699, 'Single Vision Anti-Glare')" class="mr-2">
+                                <span class="font-bold">Single Vision Anti-Glare (Prescription)</span>
+                            </div>
+                            <span class="font-bold text-blue-900">+₹699</span>
+                        </label>
+                        <label class="flex items-center justify-between p-2.5 border rounded-xl cursor-pointer hover:bg-gray-50">
+                            <div>
+                                <input type="radio" name="lensChoice" value="bifocal" onchange="onLensSelected(1199, 'Bifocal D-Kryptok')" class="mr-2">
+                                <span class="font-bold">Bifocal (Distance + Reading Line)</span>
+                            </div>
+                            <span class="font-bold text-blue-900">+₹1,199</span>
+                        </label>
+                        <!-- Progressive Warning Trigger -->
+                        <label onclick="showProgressiveWarning()" class="flex items-center justify-between p-2.5 border rounded-xl cursor-pointer bg-amber-50/60 border-amber-200">
+                            <div>
+                                <input type="radio" name="lensChoice" value="progressive" disabled class="mr-2">
+                                <span class="font-bold text-amber-950">Progressive Lenses (No-Line Multfocal)</span>
+                            </div>
+                            <span class="text-[10px] font-bold text-amber-800 bg-amber-200 px-1.5 py-0.5 rounded">Store Visit Only</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- PRESCRIPTION SECTION (Shows only if prescription lens chosen) -->
+                <div id="prescriptionInputBox" class="hidden p-3 bg-blue-50/50 rounded-xl border border-blue-100 space-y-2">
+                    <span class="block text-xs font-bold text-blue-950 uppercase">2. Provide Eye Prescription</span>
+                    <div class="grid grid-cols-2 gap-2 text-[11px]">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="font-bold block text-blue-950 mb-1">Right Eye (OD)</span>
+                            <div class="grid grid-cols-2 gap-1">
+                                <input type="text" id="custRSph" placeholder="SPH -1.50" class="p-1 border rounded text-center">
+                                <input type="text" id="custRAdd" placeholder="ADD +2.00" class="p-1 border rounded text-center">
+                            </div>
+                        </div>
+                        <div class="bg-white p-2 rounded border">
+                            <span class="font-bold block text-blue-950 mb-1">Left Eye (OS)</span>
+                            <div class="grid grid-cols-2 gap-1">
+                                <input type="text" id="custLSph" placeholder="SPH -1.25" class="p-1 border rounded text-center">
+                                <input type="text" id="custLAdd" placeholder="ADD +2.00" class="p-1 border rounded text-center">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-[10px] text-gray-500 flex items-center gap-1">
+                        <i class="fa-solid fa-circle-info text-blue-900"></i>
+                        <span>Or upload a photo of doctor's slip during checkout.</span>
+                    </div>
+                </div>
+
+                <div class="pt-2 border-t flex items-center justify-between">
+                    <div>
+                        <span class="text-[10px] text-gray-500 font-bold block">TOTAL ESTIMATE</span>
+                        <span id="modalFinalPrice" class="text-base font-black text-blue-950">₹0</span>
+                    </div>
+                    <button onclick="addToCartFromModal()" class="px-6 py-2.5 brand-bg text-amber-400 font-bold rounded-xl text-xs uppercase shadow hover:bg-blue-900 transition">
+                        Add To Cart
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. PROGRESSIVE WARNING POPUP -->
+        <div id="progressiveModal" class="hidden fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4">
+            <div class="bg-white rounded-3xl p-5 max-w-sm w-full text-center space-y-3 shadow-2xl border">
+                <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto text-xl">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <h3 class="text-sm font-extrabold text-gray-900">Progressive Lenses Need In-Person Fitting</h3>
+                <p class="text-xs text-gray-600 leading-relaxed">
+                    For clear vision, progressive lenses require exact pupil center measurement. To avoid dizziness or blurry spots, we craft progressives only after clinic testing.
+                </p>
+                <div class="bg-gray-50 p-2.5 rounded-xl border text-[11px] text-gray-700">
+                    <strong>Gayatri Opticals Store:</strong><br>Jogeshwari Lane, Budhwar Peth, Pune
+                </div>
+                <div class="flex gap-2 pt-1">
+                    <a href="tel:9950053123" class="flex-1 py-2.5 brand-bg text-white rounded-xl text-xs font-bold shadow flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-phone"></i> Call Store
+                    </a>
+                    <a href="https://wa.me/919950053123?text=I%20need%20progressive%20lenses%20consultation" target="_blank" class="flex-1 py-2.5 bg-green-600 text-white rounded-xl text-xs font-bold shadow flex items-center justify-center gap-1.5">
+                        <i class="fa-brands fa-whatsapp"></i> WhatsApp
+                    </a>
+                </div>
+                <button onclick="document.getElementById('progressiveModal').classList.add('hidden')" class="text-xs text-gray-400 hover:text-gray-600 underline pt-1 block mx-auto">
+                    Close Window
+                </button>
+            </div>
+        </div>
+
+        <!-- 4. CART & CHECKOUT MODAL (MAHARASHTRA PINCODE VALIDATION) -->
+        <div id="cartModal" class="hidden fixed inset-0 z-50 bg-black/70 flex items-end justify-center">
+            <div class="bg-white rounded-t-3xl p-5 w-full max-w-md max-h-[90vh] overflow-y-auto space-y-4 shadow-2xl animate-slide-up">
+                <div class="flex justify-between items-center border-b pb-2">
+                    <h3 class="text-sm font-extrabold text-blue-950 uppercase">Shopping Cart & Checkout</h3>
+                    <button onclick="document.getElementById('cartModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+                </div>
+
+                <!-- Cart Items List -->
+                <div id="cartItemsList" class="space-y-2 text-xs"></div>
+
+                <!-- Delivery Method Selector -->
+                <div class="p-3 bg-gray-50 rounded-xl border space-y-2">
+                    <span class="block text-xs font-bold text-gray-800 uppercase">Delivery Option</span>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <label class="p-2 border rounded-lg bg-white flex items-center gap-2 cursor-pointer font-semibold">
+                            <input type="radio" name="deliveryMethod" value="courier" checked onchange="updateCartTotal()">
+                            <span>🏠 Home Delivery</span>
+                        </label>
+                        <label class="p-2 border rounded-lg bg-white flex items-center gap-2 cursor-pointer font-semibold">
+                            <input type="radio" name="deliveryMethod" value="pickup" onchange="updateCartTotal()">
+                            <span>🏬 Store Pickup (Free)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Address Form (With strict Maharashtra Pincode check: 40xxxx - 44xxxx) -->
+                <form id="checkoutAddressForm" class="space-y-2.5">
+                    <span class="block text-xs font-bold text-blue-950 uppercase">Delivery Address (Maharashtra Only)</span>
+                    <input type="text" id="addrFlat" required placeholder="Flat / House No. & Building Name *" class="w-full text-xs p-2.5 border rounded-xl">
+                    <input type="text" id="addrStreet" required placeholder="Street / Gali / Road *" class="w-full text-xs p-2.5 border rounded-xl">
+                    <input type="text" id="addrLandmark" placeholder="Landmark (Near Temple, School, etc.)" class="w-full text-xs p-2.5 border rounded-xl">
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="text" id="addrCity" required placeholder="City (e.g. Pune) *" class="w-full text-xs p-2.5 border rounded-xl">
+                        <input type="text" id="addrPincode" maxlength="6" required oninput="validateMaharashtraPincode()" placeholder="Pincode (6-digit) *" class="w-full text-xs p-2.5 border rounded-xl font-bold">
+                    </div>
+                    <!-- Pincode feedback -->
+                    <p id="pincodeError" class="hidden text-[10px] text-red-600 font-bold"></p>
+                    <p id="pincodeSuccess" class="hidden text-[10px] text-green-700 font-bold">✅ Verified Maharashtra Pincode (Delivery Available)</p>
+
+                    <div class="p-3 bg-amber-50 rounded-xl border border-amber-200 text-[10px] text-amber-900 leading-tight">
+                        <strong>Policy:</strong> Orders cannot be canceled after custom lens cutting & fitting.
+                    </div>
+
+                    <!-- Price Breakdown -->
+                    <div class="pt-2 border-t space-y-1 text-xs">
+                        <div class="flex justify-between text-gray-600">
+                            <span>Subtotal:</span>
+                            <span id="cartSubtotal">₹0</span>
+                        </div>
+                        <div class="flex justify-between text-gray-600">
+                            <span>Shipping Fee:</span>
+                            <span id="cartDeliveryFee">₹0</span>
+                        </div>
+                        <div class="flex justify-between font-black text-sm text-blue-950 pt-1 border-t">
+                            <span>Total Payable:</span>
+                            <span id="cartGrandTotal">₹0</span>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="paytmCheckoutBtn" class="w-full py-3.5 brand-bg text-amber-400 font-bold rounded-xl text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-2 hover:bg-blue-900 transition">
+                        <i class="fa-solid fa-lock"></i>
+                        <span>Pay Online via Paytm / UPI</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 5. ORDERS TRACKING MODAL -->
+        <div id="ordersModal" class="hidden fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+            <div class="bg-white rounded-3xl p-5 max-w-sm w-full max-h-[85vh] overflow-y-auto space-y-3 shadow-2xl border">
+                <div class="flex justify-between items-center border-b pb-2">
+                    <h3 class="text-xs font-bold text-gray-800 uppercase">My Orders & Tracking</h3>
+                    <button onclick="document.getElementById('ordersModal').classList.add('hidden')" class="text-gray-400"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div id="myOrdersList" class="space-y-2 text-xs">
+                    <p class="text-gray-400">Loading your orders...</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- SCRIPT LOGIC (APP ENGINE) -->
+    <script>
+        let allProducts = [];
+        let cart = [];
+        let selectedProductForModal = null;
+        let selectedLensPrice = 0;
+        let selectedLensTitle = "Frame Only";
+        let activeCategory = "All";
+        let activeShape = "All";
+        let currentUser = JSON.parse(localStorage.getItem('goptics_user')) || null;
+
+        window.onload = function() {
+            loadCatalogFromFirestore();
+            loadReviews();
+            updateCartBadge();
+            if(!currentUser) {
+                setTimeout(() => { document.getElementById('loginModal').classList.remove('hidden'); }, 1500);
+            }
+        };
+
+        // 1. AUTHENTICATION & DEMO OTP
+        function sendOtp() {
+            const name = document.getElementById('custNameInput').value.trim();
+            const phone = document.getElementById('custPhoneInput').value.trim();
+            if(!name || phone.length !== 10) {
+                alert("Please enter a valid Name and 10-digit Phone number.");
+                return;
+            }
+            document.getElementById('phoneStep').classList.add('hidden');
+            document.getElementById('otpStep').classList.remove('hidden');
+        }
+
+        function verifyOtp() {
+            const otp = document.getElementById('otpCodeInput').value.trim();
+            const name = document.getElementById('custNameInput').value.trim();
+            const phone = document.getElementById('custPhoneInput').value.trim();
+            
+            // Demo OTP is 1234 or any 4 digit
+            if(otp.length === 4) {
+                currentUser = { name, phone };
+                localStorage.setItem('goptics_user', JSON.stringify(currentUser));
+                document.getElementById('loginModal').classList.add('hidden');
+                alert(`Welcome, ${name}! Your account is ready.`);
+            } else {
+                alert("Please enter 1234 as verification code.");
+            }
+        }
+
+        function checkAuth() {
+            if(currentUser) {
+                alert(`Logged in as: ${currentUser.name} (${currentUser.phone})\nStore: Gayatri Opticals, Pune`);
+            } else {
+                document.getElementById('loginModal').classList.remove('hidden');
+            }
+        }
+
+        // 2. LOAD CATALOG FROM FIRESTORE
+        function loadCatalogFromFirestore() {
+            db.collection('products').where('inStock', '==', true).onSnapshot(snap => {
+                allProducts = [];
+                snap.forEach(doc => {
+                    const data = doc.data();
+                    data.id = doc.id;
+                    allProducts.push(data);
+                });
+                applyFilters();
+            });
+        }
+
+        function setCategory(cat) {
+            activeCategory = cat;
+            document.querySelectorAll('.cat-pill').forEach(btn => {
+                if(btn.dataset.cat === cat) {
+                    btn.className = "cat-pill px-3.5 py-1.5 rounded-full font-bold whitespace-nowrap bg-blue-950 text-amber-400 shadow-sm";
+                } else {
+                    btn.className = "cat-pill px-3.5 py-1.5 rounded-full font-semibold whitespace-nowrap bg-gray-100 text-gray-700 hover:bg-gray-200";
+                }
+            });
+            applyFilters();
+        }
+
+        function setShape(shape) {
+            activeShape = shape;
+            document.querySelectorAll('.shape-pill').forEach(btn => {
+                if(btn.dataset.shape === shape) {
+                    btn.className = "shape-pill px-2.5 py-1 rounded-lg border bg-blue-950 text-white font-bold";
+                } else {
+                    btn.className = "shape-pill px-2.5 py-1 rounded-lg border bg-white text-gray-600";
+                }
+            });
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            const filtered = allProducts.filter(item => {
+                const matchesCat = activeCategory === "All" || item.category === activeCategory;
+                const matchesShape = activeShape === "All" || item.shape === activeShape;
+                const matchesSearch = item.name.toLowerCase().includes(query) || (item.shape && item.shape.toLowerCase().includes(query));
+                return matchesCat && matchesShape && matchesSearch;
+            });
+            renderProductGrid(filtered);
+        }
+
+        function renderProductGrid(items) {
+            const grid = document.getElementById('productGrid');
+            document.getElementById('productCount').textContent = `${items.length} items found`;
+            if (items.length === 0) {
+                grid.innerHTML = `<div class="p-8 col-span-2 text-center text-xs text-gray-400">No frames match this filter.</div>`;
+                return;
+            }
+            grid.innerHTML = '';
+            items.forEach(p => {
+                const card = document.createElement('div');
+                card.className = "bg-white p-3 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between hover:shadow-md transition";
+                
+                const badge = p.offerTag ? `<span class="absolute top-2 left-2 px-1.5 py-0.5 bg-amber-400 text-blue-950 font-black text-[9px] rounded-md shadow-sm">${p.offerTag}</span>` : '';
+                const spinBadge = p.view360Url ? `<span class="absolute top-2 right-2 px-1 py-0.5 bg-blue-950 text-white text-[8px] font-bold rounded"><i class="fa-solid fa-arrows-spin"></i> 360°</span>` : '';
+
+                card.innerHTML = `
+                    <div class="relative w-full h-28 bg-gray-50 rounded-xl mb-2 flex items-center justify-center overflow-hidden">
+                        <img src="${p.imageUrl}" class="max-h-full max-w-full object-contain">
+                        ${badge}
+                        ${spinBadge}
+                    </div>
+                    <div>
+                        <span class="text-[9px] font-bold uppercase text-gray-400">${p.category} • ${p.shape}</span>
+                        <h4 class="font-bold text-xs text-gray-900 truncate mt-0.5">${p.name}</h4>
+                        <div class="flex items-baseline gap-1 mt-1">
+                            <span class="text-xs font-black text-blue-950">₹${p.price}</span>
+                            ${p.mrp ? `<span class="text-[10px] text-gray-400 line-through">₹${p.mrp}</span>` : ''}
+                        </div>
+                    </div>
+                    <button onclick="openProductModal('${p.id}')" class="mt-2.5 w-full py-1.5 brand-bg text-amber-400 text-xs font-bold rounded-xl uppercase tracking-wider hover:bg-blue-900 transition">
+                        Select Lens
+                    </button>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // 3. PRODUCT DETAIL & CUSTOMIZATION MODAL
+        function openProductModal(productId) {
+            selectedProductForModal = allProducts.find(p => p.id === productId);
+            if(!selectedProductForModal) return;
+
+            document.getElementById('modalFrameName').textContent = selectedProductForModal.name;
+            document.getElementById('modalFrameMeta').textContent = `${selectedProductForModal.category} | ${selectedProductForModal.shape} | Rim: ${selectedProductForModal.rim || 'Full Rim'}`;
+            document.getElementById('modalFrameImg').src = selectedProductForModal.imageUrl;
+
+            if(selectedProductForModal.view360Url) {
+                document.getElementById('modal360Link').href = selectedProductForModal.view360Url;
+                document.getElementById('modal360Badge').classList.remove('hidden');
+            } else {
+                document.getElementById('modal360Badge').classList.add('hidden');
+            }
+
+            // Reset lens selection to default
+            onLensSelected(0, 'Frame Only');
+            document.querySelector('input[name="lensChoice"][value="frameOnly"]').checked = true;
+
+            document.getElementById('productDetailModal').classList.remove('hidden');
+        }
+
+        function closeProductModal() {
+            document.getElementById('productDetailModal').classList.add('hidden');
+        }
+
+        function onLensSelected(price, title) {
+            selectedLensPrice = price;
+            selectedLensTitle = title;
+            const rxBox = document.getElementById('prescriptionInputBox');
+            if(price > 0 && title !== 'Zero Power Blue-Cut') {
+                rxBox.classList.remove('hidden');
+            } else {
+                rxBox.classList.add('hidden');
+            }
+            updateModalPrice();
+        }
+
+        function updateModalPrice() {
+            if(!selectedProductForModal) return;
+            const total = selectedProductForModal.price + selectedLensPrice;
+            document.getElementById('modalFinalPrice').textContent = `₹${total}`;
+        }
+
+        function showProgressiveWarning() {
+            document.getElementById('progressiveModal').classList.remove('hidden');
+        }
+
+        function addToCartFromModal() {
+            if(!currentUser) {
+                document.getElementById('loginModal').classList.remove('hidden');
+                return;
+            }
+
+            const item = {
+                frameId: selectedProductForModal.id,
+                name: selectedProductForModal.name,
+                framePrice: selectedProductForModal.price,
+                lensTitle: selectedLensTitle,
+                lensPrice: selectedLensPrice,
+                totalItemPrice: selectedProductForModal.price + selectedLensPrice,
+                imageUrl: selectedProductForModal.imageUrl,
+                rSph: document.getElementById('custRSph').value || '-',
+                rAdd: document.getElementById('custRAdd').value || '-',
+                lSph: document.getElementById('custLSph').value || '-',
+                lAdd: document.getElementById('custLAdd').value || '-'
+            };
+
+            cart.push(item);
+            updateCartBadge();
+            closeProductModal();
+            openCart();
+        }
+
+        function updateCartBadge() {
+            const badge = document.getElementById('cartBadge');
+            if(cart.length > 0) {
+                badge.textContent = cart.length;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        // 4. CART & MAHARASHTRA PINCODE VALIDATION
+        function openCart() {
+            const list = document.getElementById('cartItemsList');
+            if(cart.length === 0) {
+                list.innerHTML = `<p class="p-6 text-center text-gray-400">Your shopping cart is empty.</p>`;
+                document.getElementById('cartModal').classList.remove('hidden');
+                updateCartTotal();
+                return;
+            }
+
+            list.innerHTML = '';
+            cart.forEach((c, index) => {
+                const item = document.createElement('div');
+                item.className = "p-2.5 bg-gray-50 border rounded-xl flex justify-between items-center";
+                item.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <img src="${c.imageUrl}" class="w-10 h-10 object-contain bg-white rounded border">
+                        <div>
+                            <span class="font-bold text-gray-900">${c.name}</span>
+                            <p class="text-[10px] text-gray-500">${c.lensTitle} (+₹${c.lensPrice})</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-blue-950">₹${c.totalItemPrice}</span>
+                        <button onclick="removeFromCart(${index})" class="text-red-500 p-1"><i class="fa-solid fa-trash text-xs"></i></button>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+
+            document.getElementById('cartModal').classList.remove('hidden');
+            updateCartTotal();
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateCartBadge();
+            openCart();
+        }
+
+        function updateCartTotal() {
+            const subtotal = cart.reduce((acc, i) => acc + i.totalItemPrice, 0);
+            const method = document.querySelector('input[name="deliveryMethod"]:checked').value;
+            
+            // Shipping Rule: Free over ₹999, else ₹50 (Pickup is ₹0)
+            let deliveryFee = 0;
+            if(method === 'courier' && subtotal > 0) {
+                deliveryFee = subtotal >= 999 ? 0 : 50;
+            }
+
+            document.getElementById('cartSubtotal').textContent = `₹${subtotal}`;
+            document.getElementById('cartDeliveryFee').textContent = deliveryFee === 0 ? 'FREE' : `₹${deliveryFee}`;
+            document.getElementById('cartGrandTotal').textContent = `₹${subtotal + deliveryFee}`;
+        }
+
+        // STRICT MAHARASHTRA PINCODE VALIDATION (40xxxx to 44xxxx)
+        function validateMaharashtraPincode() {
+            const pin = document.getElementById('addrPincode').value.trim();
+            const err = document.getElementById('pincodeError');
+            const succ = document.getElementById('pincodeSuccess');
+
+            if(pin.length === 6) {
+                const prefix = parseInt(pin.substring(0, 2), 10);
+                if(prefix >= 40 && prefix <= 44) {
+                    err.classList.add('hidden');
+                    succ.classList.remove('hidden');
+                    return true;
+                } else {
+                    succ.classList.add('hidden');
+                    err.textContent = "❌ Delivery available only in Maharashtra (Pincodes starting with 40 to 44).";
+                    err.classList.remove('hidden');
+                    return false;
+                }
+            } else {
+                err.classList.add('hidden');
+                succ.classList.add('hidden');
+                return false;
+            }
+        }
+
+        // CHECKOUT & PLACE ORDER TO FIRESTORE
+        document.getElementById('checkoutAddressForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if(cart.length === 0) {
+                alert("Cart is empty!");
+                return;
+            }
+            if(!validateMaharashtraPincode()) {
+                alert("Please provide a valid 6-digit Maharashtra pincode (40xxxx - 44xxxx).");
+                return;
+            }
+
+            const btn = document.getElementById('paytmCheckoutBtn');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Processing via Paytm Gateway...`;
+
+            const subtotal = cart.reduce((acc, i) => acc + i.totalItemPrice, 0);
+            const deliveryMethod = document.querySelector('input[name="deliveryMethod"]:checked').value;
+            const deliveryFee = (deliveryMethod === 'courier' && subtotal < 999) ? 50 : 0;
+            const grandTotal = subtotal + deliveryFee;
+
+            const orderPayload = {
+                customerName: currentUser.name,
+                customerPhone: currentUser.phone,
+                items: cart,
+                totalAmount: grandTotal,
+                orderStatus: "In Lens Fitting",
+                paymentStatus: "PAID via Paytm Gateway",
+                shippingAddress: {
+                    flatHouse: document.getElementById('addrFlat').value.trim(),
+                    streetRoad: document.getElementById('addrStreet').value.trim(),
+                    landmark: document.getElementById('addrLandmark').value.trim(),
+                    city: document.getElementById('addrCity').value.trim(),
+                    state: "Maharashtra",
+                    pincode: document.getElementById('addrPincode').value.trim(),
+                    method: deliveryMethod
+                },
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            try {
+                await db.collection('orders').add(orderPayload);
+                alert("🎉 Order placed successfully! Paid via Paytm. Our master opticians have begun lens preparation.");
+                cart = [];
+                updateCartBadge();
+                document.getElementById('cartModal').classList.add('hidden');
+                openMyOrders();
+            } catch (err) {
+                alert("Order failed: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-lock"></i> <span>Pay Online via Paytm / UPI</span>`;
+            }
+        });
+
+        // 5. MY ORDERS TRACKING
+        function openMyOrders() {
+            if(!currentUser) {
+                document.getElementById('loginModal').classList.remove('hidden');
+                return;
+            }
+            const modal = document.getElementById('ordersModal');
+            const list = document.getElementById('myOrdersList');
+            modal.classList.remove('hidden');
+
+            db.collection('orders').where('customerPhone', '==', currentUser.phone).orderBy('createdAt', 'desc').onSnapshot(snap => {
+                if(snap.empty) {
+                    list.innerHTML = `<p class="p-4 text-center text-gray-400">You haven't placed any orders yet.</p>`;
+                    return;
+                }
+                list.innerHTML = '';
+                snap.forEach(doc => {
+                    const ord = doc.data();
+                    const card = document.createElement('div');
+                    card.className = "p-3 bg-gray-50 border rounded-xl space-y-2";
+                    
+                    const trackInfo = ord.trackingNumber ? 
+                        `<div class="p-2 bg-emerald-50 border border-emerald-200 rounded text-[10px] text-emerald-900 font-bold">
+                            🚚 Tracking: ${ord.trackingNumber} (${ord.courierName || 'Speed Post'})
+                         </div>` : '';
+
+                    card.innerHTML = `
+                        <div class="flex justify-between items-center border-b pb-1 font-bold">
+                            <span class="text-blue-950">#${doc.id.substring(0,6).toUpperCase()}</span>
+                            <span class="text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded text-[10px]">${ord.orderStatus}</span>
+                        </div>
+                        <div class="text-[11px] text-gray-600">
+                            Total: <strong>₹${ord.totalAmount}</strong> | Items: ${ord.items?.length || 1}
+                        </div>
+                        ${trackInfo}
+                    `;
+                    list.appendChild(card);
+                });
+            });
+        }
+
+        // 6. CUSTOMER REVIEWS
+        function loadReviews() {
+            db.collection('reviews').orderBy('createdAt', 'desc').limit(5).onSnapshot(snap => {
+                const container = document.getElementById('reviewsContainer');
+                if(snap.empty) {
+                    container.innerHTML = `<p class="text-gray-400">Be the first to review Gayatri Opticals!</p>`;
+                    return;
+                }
+                container.innerHTML = '';
+                snap.forEach(doc => {
+                    const r = doc.data();
+                    const card = document.createElement('div');
+                    card.className = "p-2.5 bg-gray-50 rounded-xl border border-gray-100";
+                    let stars = '';
+                    for(let i=1; i<=5; i++) {
+                        stars += `<i class="fa-solid fa-star ${i <= r.rating ? 'text-amber-400' : 'text-gray-300'} text-[10px]"></i>`;
+                    }
+                    const reply = r.ownerReply ? `
+                        <div class="mt-1 pl-2 border-l-2 border-blue-900 text-[10px] text-gray-600">
+                            <strong>Gayatri Opticals:</strong> ${r.ownerReply}
+                        </div>
+                    ` : '';
+                    card.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-gray-800 text-[11px]">${r.customerName}</span>
+                            <div>${stars}</div>
+                        </div>
+                        <p class="text-gray-600 text-[11px] mt-0.5">${r.comment}</p>
+                        ${reply}
+                    `;
+                    container.appendChild(card);
+                });
+            });
+        }
+
+        function openReviewModal() {
+            if(!currentUser) {
+                document.getElementById('loginModal').classList.remove('hidden');
+                return;
+            }
+            const rating = prompt("Rate your experience (1 to 5 Stars):", "5");
+            if(!rating) return;
+            const comment = prompt("Write your feedback for Gayatri Opticals:");
+            if(!comment) return;
+
+            db.collection('reviews').add({
+                customerName: currentUser.name,
+                customerPhone: currentUser.phone,
+                rating: parseInt(rating, 10) || 5,
+                comment: comment.trim(),
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            alert("Thank you for your valuable review!");
+        }
+    </script>
+</body>
+</html>
